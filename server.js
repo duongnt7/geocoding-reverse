@@ -69,7 +69,7 @@ const csvWriter = createCsvWriter({
 /////////////////////////////////////////////////////////////////////////////////////
 
 ////-----READ CSV-----//////////////////////////////////////////////////////////////
-fs.createReadStream("./data/dataUS_10k.csv") //
+fs.createReadStream("./data/dataUS_10k.csv") //file_csv to get geocoder
   .pipe(csv({ separator: ";" })) //
   .on("data", async (row) => {
     dataUS.push(row);
@@ -103,6 +103,7 @@ function getGeocodingReverse(id, lat, lng) {
     )
     .then((res) => {
       let title = id;
+      console.log(id, res.data.address.state);
       dataResponse = { ...dataResponse, [title]: res.data };
     });
 }
@@ -112,8 +113,11 @@ function getGeocodingReverse(id, lat, lng) {
 const saveJson = () => {
   var jsonData = JSON.stringify(dataResponse);
   fs.writeFile("./data/geocoding-reverse_10k.txt", jsonData, function (err) {
+    //file data addresss after geocoding reverse
     if (err) {
       console.log(err);
+    } else {
+      console.log("sucess!");
     }
   });
 };
