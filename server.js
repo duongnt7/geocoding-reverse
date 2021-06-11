@@ -6,7 +6,7 @@ const csv = require("csv-parser");
 const createCsvWriter = require("csv-writer").createObjectCsvWriter;
 const axios = require("axios");
 
-let dataResponse = {};
+let dataResponse;
 let dataUS = [];
 let count = 1;
 
@@ -69,7 +69,7 @@ const csvWriter = createCsvWriter({
 /////////////////////////////////////////////////////////////////////////////////////
 
 ////-----READ CSV-----//////////////////////////////////////////////////////////////
-fs.createReadStream("./data/dataUS_10k.csv") //file_csv to get geocoder
+fs.createReadStream("./data/dataUS_15k.csv") //file_csv to get geocoder
   .pipe(csv({ separator: ";" })) //
   .on("data", async (row) => {
     dataUS.push(row);
@@ -83,9 +83,6 @@ fs.createReadStream("./data/dataUS_10k.csv") //file_csv to get geocoder
         dataUS[i].lng
       );
       if (i == dataUS.length - 1) {
-        setTimeout(() => {
-          saveJson();
-        }, 10000);
         clearInterval(getLocation);
       } else {
         console.log(i);
@@ -104,22 +101,42 @@ function getGeocodingReverse(id, lat, lng) {
     .then((res) => {
       let title = id;
       console.log(id, res.data.address.state);
-      dataResponse = { ...dataResponse, [title]: res.data };
+      dataResponse = { [title]: res.data };
+      saveJson(dataResponse);
+    })
+    .catch(() => {
+      logError(id);
     });
 }
 /////////////////////////////
 
-///---save json----//////////////////////////
-const saveJson = () => {
-  var jsonData = JSON.stringify(dataResponse);
-  fs.writeFile("./data/geocoding-reverse_10k.txt", jsonData, function (err) {
+////---LOG error----/////////////////////////
+const logError = (data) => {
+  var logID = data.toString() + ",";
+  fs.appendFileSync("./data/log_error.txt", logID, function (err) {
     //file data addresss after geocoding reverse
     if (err) {
       console.log(err);
     } else {
-      console.log("sucess!");
+      console.log("id error:", data);
     }
   });
+};
+////////////////////////////////////////////
+
+///---save json----//////////////////////////
+const saveJson = (data) => {
+  var jsonData = JSON.stringify(data).slice(1, -1) + ",";
+  fs.appendFileSync(
+    "./data/geocoding-reverse_15k.txt",
+    jsonData,
+    function (err) {
+      //file data addresss after geocoding reverse
+      if (err) {
+        console.log(err);
+      }
+    }
+  );
 };
 ////////////////////////////////////////////
 
@@ -159,14 +176,15 @@ const saveJson = () => {
 /////------JSON DATA----////////////////////////////////////////////////
 // let title = "abc";
 // let json = {
-//   [title]: "tét",
-//   t2: "2",
+//   [title]: {
+//     t2: "2",
+//   },
 // };
 
 // console.log(json);
-// var jsonData = JSON.stringify(json);
+// var jsonData = JSON.stringify(json).slice(1, -1) + ",";
 
-// fs.writeFile("test.txt", jsonData, function (err) {
+// fs.appendFileSync("test.txt", jsonData, function (err) {
 //   if (err) {
 //     console.log(err);
 //   }
